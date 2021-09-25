@@ -17,7 +17,7 @@ type AppSettingS struct {
 	LogFileExt           string
 	UploadSavePath       string
 	UploadServerUrl      string
-	UploadImageMaxSize   string
+	UploadImageMaxSize   int
 	UploadImageAllowExts []string
 }
 

@@ -3,6 +3,10 @@ package upload
 import (
 	"github.com/go-programming-tour-book/blog-service/global"
 	"github.com/go-programming-tour-book/blog-service/pkg/util"
+	"io"
+	"io/ioutil"
+	"mime/multipart"
+	"os"
 	"path"
 	"strings"
 )
@@ -24,4 +28,69 @@ func GetFileExt(name string) string {
 
 func GetSavePath() string {
 	return global.AppSetting.UploadSavePath
+}
+
+// CheckSavePath 查看保存文件的目录是否存在
+func CheckSavePath(dst string) bool {
+	_, err := os.Stat(dst)
+	return os.IsNotExist(err)
+}
+
+// 查看后缀是否符合系统支持
+func CheckContainExt(t FileType, name string) bool {
+	ext := GetFileExt(name)
+	ext = strings.ToUpper(ext)
+	switch t {
+	case TypeImage:
+		for _, allowExt := range global.AppSetting.UploadImageAllowExts {
+			if strings.ToUpper(allowExt) == ext {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+//检查文件大小是否超出限制
+func CheckMaxSize(t FileType, f multipart.File) bool {
+	content, _ := ioutil.ReadAll(f)
+	size := len(content)
+	switch t {
+	case TypeImage:
+		if size >= global.AppSetting.UploadImageMaxSize*1024*1024 {
+			return true
+		}
+	}
+	return false
+}
+
+//查看文件权限
+func CheckPermission(dst string) bool {
+	_, err := os.Stat(dst)
+	return os.IsPermission(err)
+}
+
+func CreateSavePath(dst string, perm os.FileMode) error {
+	err := os.MkdirAll(dst, perm)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func SaveFile(file *multipart.FileHeader, dst string) error {
+	src, err := file.Open()
+	if err != nil {
+		return err
+	}
+	defer src.Close()
+	//创建目标文件
+	out, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+	//将源文件拷贝至目标文件
+	_, err = io.Copy(out, src)
+	return err
 }
