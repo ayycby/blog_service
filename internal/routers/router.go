@@ -2,9 +2,11 @@ package routers
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/go-programming-tour-book/blog-service/global"
 	"github.com/go-programming-tour-book/blog-service/internal/middleware"
 	"github.com/go-programming-tour-book/blog-service/internal/routers/api"
 	v1 "github.com/go-programming-tour-book/blog-service/internal/routers/api/v1"
+	"net/http"
 )
 
 func MewRouter() *gin.Engine {
@@ -16,6 +18,9 @@ func MewRouter() *gin.Engine {
 	// upload file router
 	upload := api.NewUpload()
 	r.POST("/upload/file", upload.UploadFile)
+
+	//file server
+	r.StaticFS("/static", http.Dir(global.AppSetting.UploadSavePath))
 
 	// tag & article router
 	article := v1.NewArticle()
